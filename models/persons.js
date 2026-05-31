@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize'
-import sequelize from '../clients/db.mysql'
+import sequelize from '../clients/db.mysql.js'
 import _ from 'lodash'
 
 const Person = sequelize.define(
