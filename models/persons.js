@@ -1,59 +1,70 @@
-import DbMysql from "../clients/db.mysql.js";
-import _ from "lodash";
+import { DataTypes } from 'sequelize'
+import sequelize from '../clients/db.mysql'
+import _ from 'lodash'
+
+const Person = sequelize.define(
+	'Person',
+	{
+		PersonID: {
+			type: DataTypes.INTEGER,
+			primaryKey: true,
+			autoIncrement: true
+		},
+		FirstName: { type: DataTypes.STRING(50), allowNull: false },
+		LastName: { type: DataTypes.STRING(50), allowNull: false }
+	},
+	{
+		tableName: 'Persons',
+		timestamps: false
+	}
+)
 
 export async function getAll() {
-  try {
-    const [rows] = await DbMysql.query(
-      "SELECT * FROM Persons ORDER BY PersonID",
-    );
-    return rows;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+	try {
+		return await Person.findAll({ order: [['PersonID', 'ASC']] })
+	} catch (error) {
+		console.error(error)
+		return null
+	}
 }
 
 export async function create({ FirstName, LastName }) {
-  try {
-    const [result] = await DbMysql.query(
-      "INSERT INTO Persons (FirstName, LastName) VALUES (?, ?)",
-      [FirstName, LastName],
-    );
-    return result.insertId;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+	try {
+		const person = Person.create({ FirstName, LastName })
+		return Person.PersonID
+	} catch (error) {
+		console.error(error)
+		return null
+	}
 }
 
 export async function update(id, { FirstName, LastName }) {
-  try {
-    const [result] = await DbMysql.query(
-      "UPDATE Persons SET FirstName = ?, LastName = ? WHERE PersonID = ?",
-      [FirstName, LastName, id],
-    );
-    return result.affectedRows;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+	try {
+		const [affectedRows] = await Person.update(
+			{ FirstName, LastName },
+			{ where: { PersonID: id } }
+		)
+		return affectedRows
+	} catch (error) {
+		console.error(error)
+		return null
+	}
 }
 
 export async function remove(id) {
-  try {
-    const [orderRows] = await DbMysql.query(
-      "SELECT COUNT(*) AS cnt FROM Orders WHERE PersonID = ?",
-      [id],
-    );
-    const cascadedOrders = _.get(orderRows, "[0].cnt", 0);
+	try {
+		const cascadedOrders = await sequelize.models.Order.count({
+			where: { PersonID: id }
+		})
 
-    await DbMysql.query("DELETE FROM Persons WHERE PersonID = ?", [id]);
+		await Person.destroy({ where: { PersonID: id } })
 
-    return { cascadedOrders };
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+		return { cascadedOrders }
+	} catch (error) {
+		console.error(error)
+		return null
+	}
 }
 
-export default { getAll, create, update, remove };
+export default { getAll, create, update, remove }
+export { Person }
