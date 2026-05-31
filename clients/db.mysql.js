@@ -1,19 +1,21 @@
-import "dotenv/config";
-import mysql from "mysql2";
+import 'dotenv/config'
+import { Sequelize } from 'sequelize'
 
-const pool = mysql.createPool({
-  host: process.env.MY_SQL_HOST,
-  port: process.env.MY_SQL_PORT,
-  user: process.env.MY_SQL_USER,
-  password: process.env.MY_SQL_PASSWORD,
-  database: process.env.MY_SQL_DATABASE,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+const sequelize = new Sequelize(
+	process.env.MY_SQL_DATABASE,
+	process.env.MY_SQL_USER,
+	process.env.MY_SQL_PASSWORD,
+	{
+		host: process.env.MY_SQL_HOST,
+		port: process.env.MY_SQL_PORT,
+		dialect: 'mysql',
+		logging: false
+	}
+)
 
-pool.on("connection", () => {
-  console.log("DB connection succeeded.");
-});
+sequelize
+	.authenticate()
+	.then(() => console.log('DB connection succeeded.'))
+	.catch(err => console.error('DB connection failed:', err))
 
-export default pool.promise();
+export default sequelize
